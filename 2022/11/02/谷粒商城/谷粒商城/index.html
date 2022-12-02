@@ -1,0 +1,735 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><title>谷粒商城笔记 | 文的个人博客</title><meta name="author" content="毛奇文"><meta name="copyright" content="毛奇文"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="ffffff"><meta name="description" content="性能与压力测试缓存缓存失效问题 缓存穿透 缓存穿透是指查询一个一定不存在的数据。由于缓存不命中，将去查询数据库，但是数据库也无此记录，我们没有将这次查询的null写入缓存，这将导致这个不存在的数据每次请求都要到存储层去查询，失去了缓存的意义。 在流量大时，可能DB就挂掉了，要是有人利用不存在的key频繁攻击我们的应用，这就是漏洞。 解决： 缓存空结果，并且设置短的过期时间。     缓存雪崩 缓存">
+<meta property="og:type" content="article">
+<meta property="og:title" content="谷粒商城笔记">
+<meta property="og:url" content="http://amao455.github.io/2022/11/02/%E8%B0%B7%E7%B2%92%E5%95%86%E5%9F%8E/%E8%B0%B7%E7%B2%92%E5%95%86%E5%9F%8E/index.html">
+<meta property="og:site_name" content="文的个人博客">
+<meta property="og:description" content="性能与压力测试缓存缓存失效问题 缓存穿透 缓存穿透是指查询一个一定不存在的数据。由于缓存不命中，将去查询数据库，但是数据库也无此记录，我们没有将这次查询的null写入缓存，这将导致这个不存在的数据每次请求都要到存储层去查询，失去了缓存的意义。 在流量大时，可能DB就挂掉了，要是有人利用不存在的key频繁攻击我们的应用，这就是漏洞。 解决： 缓存空结果，并且设置短的过期时间。     缓存雪崩 缓存">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://amao455.github.io/img/2.jpg">
+<meta property="article:published_time" content="2022-11-01T16:00:00.000Z">
+<meta property="article:modified_time" content="2022-12-02T06:52:44.215Z">
+<meta property="article:author" content="毛奇文">
+<meta property="article:tag" content="Java">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://amao455.github.io/img/2.jpg"><link rel="shortcut icon" href="/img/6.png"><link rel="canonical" href="http://amao455.github.io/2022/11/02/%E8%B0%B7%E7%B2%92%E5%95%86%E5%9F%8E/%E8%B0%B7%E7%B2%92%E5%95%86%E5%9F%8E/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":true,"languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简"},
+  noticeOutdate: {"limitDay":365,"position":"top","messagePrev":"It has been","messageNext":"days since the last update, the content of the article may be outdated."},
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":230},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: true,
+    post: true
+  },
+  runtime: '',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"limitCount":50,"languages":{"author":"作者: 毛奇文","link":"链接: ","source":"来源: 文的个人博客","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。"}},
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"top-right"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/flickr-justified-gallery/dist/fjGallery.min.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isAnchor: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '谷粒商城笔记',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2022-12-02 14:52:44'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+    win.saveToLocal = {
+      set: function setWithExpiry(key, value, ttl) {
+        if (ttl === 0) return
+        const now = new Date()
+        const expiryDay = ttl * 86400000
+        const item = {
+          value: value,
+          expiry: now.getTime() + expiryDay,
+        }
+        localStorage.setItem(key, JSON.stringify(item))
+      },
+
+      get: function getWithExpiry(key) {
+        const itemStr = localStorage.getItem(key)
+
+        if (!itemStr) {
+          return undefined
+        }
+        const item = JSON.parse(itemStr)
+        const now = new Date()
+
+        if (now.getTime() > item.expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return item.value
+      }
+    }
+  
+    win.getScript = url => new Promise((resolve, reject) => {
+      const script = document.createElement('script')
+      script.src = url
+      script.async = true
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function() {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        resolve()
+      }
+      document.head.appendChild(script)
+    })
+  
+      win.activateDarkMode = function () {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = function () {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', 'ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const now = new Date()
+          const hour = now.getHours()
+          const isNight = hour <= 6 || hour >= 18
+          if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+    const detectApple = () => {
+      if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+    })(window)</script><link rel="stylesheet" href="/css/custom.css" media="defer" onload="this.media='all'"><link rel="stylesheet" href="/css/custom.css"><link rel="stylesheet" href="/css/universe.css"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://npm.elemecdn.com/hexo-butterfly-categories-card@1.0.0/lib/categorybar.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-double-row-display@1.00/cardlistpost.min.css"/>
+<style>#recent-posts > .recent-post-item >.recent-post-info > .article-meta-wrap > .tags:before {content:"\A";
+  white-space: pre;}#recent-posts > .recent-post-item >.recent-post-info > .article-meta-wrap > .tags > .article-meta__separator{display:none}</style>
+<link rel="stylesheet" href="https://cdn.cbd.int/hexo-butterfly-clock-anzhiyu/lib/clock.min.css" /><link rel="stylesheet" href="https://npm.elemecdn.com/hexo-butterfly-swiper/lib/swiper.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://npm.elemecdn.com/hexo-butterfly-swiper/lib/swiperstyle.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://www.fomal.cc/static/css/runtime.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://npm.elemecdn.com/hexo-butterfly-wowjs/lib/animate.min.css" media="print" onload="this.media='all'"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 6.3.0"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>const preloader = {
+  endLoading: () => {
+    document.body.style.overflow = 'auto';
+    document.getElementById('loading-box').classList.add("loaded")
+  },
+  initLoading: () => {
+    document.body.style.overflow = '';
+    document.getElementById('loading-box').classList.remove("loaded")
+
+  }
+}
+window.addEventListener('load',()=> { preloader.endLoading() })
+
+if (false) {
+  document.addEventListener('pjax:send', () => { preloader.initLoading() })
+  document.addEventListener('pjax:complete', () => { preloader.endLoading() })
+}</script><div id="web_bg"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/4.jpg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">16</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">0</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">0</div></a></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page group hide" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 列表</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/Gallery/"><i class="fa-fw fas fa-images"></i><span> 照片</span></a></li><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> 音乐</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> 电影</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/comments/"><i class="fa-fw fas fa-envelope-open"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('/img/2.jpg')"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">文的个人博客</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"> </i><!-- 导航栏的搜索两个字不显示--></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 归档</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></div><div class="menus_item"><a class="site-page group hide" href="javascript:void(0);"><i class="fa-fw fas fa-list"></i><span> 列表</span><i class="fas fa-chevron-down"></i></a><ul class="menus_item_child"><li><a class="site-page child" href="/Gallery/"><i class="fa-fw fas fa-images"></i><span> 照片</span></a></li><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> 音乐</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> 电影</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/comments/"><i class="fa-fw fas fa-envelope-open"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">谷粒商城笔记</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-11-01T16:00:00.000Z" title="发表于 2022-11-02 00:00:00">2022-11-02</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-12-02T06:52:44.215Z" title="更新于 2022-12-02 14:52:44">2022-12-02</time></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">5.3k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>16分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="谷粒商城笔记"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="性能与压力测试"><a href="#性能与压力测试" class="headerlink" title="性能与压力测试"></a>性能与压力测试</h2><h2 id="缓存"><a href="#缓存" class="headerlink" title="缓存"></a>缓存</h2><h3 id="缓存失效问题"><a href="#缓存失效问题" class="headerlink" title="缓存失效问题"></a>缓存失效问题</h3><ul>
+<li>缓存穿透<ul>
+<li>缓存穿透是指查询一个一定不存在的数据。由于缓存不命中，将去查询数据库，但是数据库也无此记录，我们没有将这次查询的null写入缓存，这将导致这个不存在的数据每次请求都要到存储层去查询，失去了缓存的意义。</li>
+<li>在流量大时，可能DB就挂掉了，要是有人利用不存在的key频繁攻击我们的应用，这就是漏洞。</li>
+<li>解决：<ul>
+<li>缓存空结果，并且设置短的过期时间。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>缓存雪崩<ul>
+<li>缓存雪崩是指在我们设置缓存时采用了相同的过期时间，导致缓存在某一时刻同时失效，请求全部转发到DB，DB瞬时压力过重崩溃。</li>
+<li>解决<ul>
+<li>原有失效时间基础上增加一个随机值，这样每一个缓存的过期时间的重复率就会降低，就很难引发集体失效的事件。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>缓存穿透<ul>
+<li>对于一些设置了过期时间的key，这些key可能会在某些时间被超高并发地访问，是一种非常<code>热点</code>的数据。</li>
+<li>这个时候，需要考虑一个问题：如果这个key在大量请求同时进来前正好失效，那么所有对这个key的数据查询都落到DB，我们称之为缓存击穿。</li>
+<li>解决：<ul>
+<li>加锁</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="缓存数据一致性"><a href="#缓存数据一致性" class="headerlink" title="缓存数据一致性"></a>缓存数据一致性</h3><h4 id="本地锁"><a href="#本地锁" class="headerlink" title="本地锁"></a>本地锁</h4><p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221109121156513-16679912247001.jpg" alt="image-20221109121156513"></p>
+<h4 id="分布式锁实现"><a href="#分布式锁实现" class="headerlink" title="分布式锁实现"></a>分布式锁实现</h4><p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E4%B8%80-16679912359962.jpg" alt="分布式锁一"></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E4%BA%8C.jpg" alt="分布式锁二"></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E4%B8%89.jpg" alt="分布式锁三"></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%9B%9B.jpg" alt="分布式锁四"></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E4%BA%94.jpg" alt="分布式锁五"></p>
+<h4 id="Redisson完成分布式锁"><a href="#Redisson完成分布式锁" class="headerlink" title="Redisson完成分布式锁"></a>Redisson完成分布式锁</h4><ul>
+<li>简介</li>
+</ul>
+<p>​	Redisson 是架设在 Redis 基础上的一个 Java 驻内存数据网格（In-Memory Data Grid）。充分 的利用了 Redis 键值数据库提供的一系列优势，基于 Java 实用工具包中常用接口，为使用者 提供了一系列具有分布式特性的常用工具类。使得原本作为协调单机多线程并发程序的工 具包获得了协调分布式多机多线程并发系统的能力，大大降低了设计和研发大规模分布式 系统的难度。同时结合各富特色的分布式服务，更进一步简化了分布式环境中程序相互之间 的协作。 </p>
+<p>​	官方文档：<a target="_blank" rel="noopener" href="https://github.com/redisson/redisson/wiki/%E7%9B%AE%E5%BD%95">https://github.com/redisson/redisson/wiki/%E7%9B%AE%E5%BD%95</a></p>
+<ul>
+<li>配置</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 默认连接地址 127.0.0.1:6379</span></span><br><span class="line"><span class="type">RedissonClient</span> <span class="variable">redisson</span> <span class="operator">=</span> Redisson.create();</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="type">Config</span> <span class="variable">config</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Config</span>();</span><br><span class="line"><span class="comment">//redis://127.0.0.1:7181</span></span><br><span class="line"><span class="comment">//可以用&quot;rediss://&quot;来启用 SSL 连接</span></span><br><span class="line">config.useSingleServer().setAddress(<span class="string">&quot;redis://192.168.56.10:6379&quot;</span>);</span><br><span class="line"><span class="type">RedissonClient</span> <span class="variable">redisson</span> <span class="operator">=</span> Redisson.create(config);</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>使用分布式锁</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">RLock</span> <span class="variable">lock</span> <span class="operator">=</span> redisson.getLock(<span class="string">&quot;anyLock&quot;</span>);<span class="comment">// 最常见的使用方法</span></span><br><span class="line">lock.lock();</span><br><span class="line"><span class="comment">// 加锁以后 10 秒钟自动解锁// 无需调用 unlock 方法手动解锁</span></span><br><span class="line">lock.lock(<span class="number">10</span>, TimeUnit.SECONDS);</span><br><span class="line"><span class="comment">// 尝试加锁，最多等待 100 秒，上锁以后 10 秒自动解锁 boolean res = lock.tryLock(100,10, TimeUnit.SECONDS);</span></span><br><span class="line"><span class="keyword">if</span> (res) &#123;</span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">...</span><br><span class="line">&#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">lock.unlock();</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Spring-Cache"><a href="#Spring-Cache" class="headerlink" title="Spring Cache"></a>Spring Cache</h3><ul>
+<li>简介<ul>
+<li>Spring 从 3.1 开始定义了 org.springframework.cache.Cache 和 org.springframework.cache.CacheManager 接口来统一不同的缓存技术； 并支持使用 JCache（JSR-107）注解简化我们开发。</li>
+<li>Cache 接口为缓存的组件规范定义，包含缓存的各种操作集合； Cache 接 口 下 Spring 提 供 了 各 种 xxxCache 的 实 现 ； 如 RedisCache ， EhCacheCache , ConcurrentMapCache 等；</li>
+<li>每次调用需要缓存功能的方法时，Spring 会检查检查指定参数的指定的目标方法是否已 经被调用过；如果有就直接从缓存中获取方法调用后的结果，如果没有就调用方法并缓 存结果后返回给用户。下次调用直接从缓存中获取。</li>
+<li>使用 Spring 缓存抽象时我们需要关注以下两点：<ul>
+<li>确定方法需要被缓存以及他们的缓存策略</li>
+<li>从缓存中读取之前缓存存储的数据</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th align="center">Cache</th>
+<th align="center">缓存接口，定义缓存操作。实现有：RedisCache、EhCacheCache、ConcurrentMapCache等</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">CacheManager</td>
+<td align="center">缓存管理器，管理各种缓存（Cache）组件</td>
+</tr>
+<tr>
+<td align="center">@Cacheable</td>
+<td align="center">主要针对方法配置，能够根据方法的请求参数对其结果进行缓存</td>
+</tr>
+<tr>
+<td align="center">@CacheEvict</td>
+<td align="center">清空缓存</td>
+</tr>
+<tr>
+<td align="center">@CachePut</td>
+<td align="center">保证方法被调用，又希望结果被保存</td>
+</tr>
+<tr>
+<td align="center">@EnableCaching</td>
+<td align="center">开启基于注解的缓存</td>
+</tr>
+<tr>
+<td align="center">keyGenerator</td>
+<td align="center">缓存数据时key生成策略</td>
+</tr>
+<tr>
+<td align="center">serialize</td>
+<td align="center">缓存数据时value序列化策略</td>
+</tr>
+</tbody></table>
+<h2 id="异步和线程"><a href="#异步和线程" class="headerlink" title="异步和线程"></a>异步和线程</h2><h3 id="线程"><a href="#线程" class="headerlink" title="线程"></a>线程</h3><h4 id="初始化线程的4种方式"><a href="#初始化线程的4种方式" class="headerlink" title="初始化线程的4种方式"></a>初始化线程的4种方式</h4><ol>
+<li>继承Thread</li>
+<li>实现Runnable接口</li>
+<li>实现Callable接口 + FutureTask（可以拿到返回结果，可以处理异常）</li>
+<li>线程池</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Executors.newFiexedThreadPool(<span class="number">3</span>);</span><br><span class="line"><span class="comment">//或者</span></span><br><span class="line"><span class="keyword">new</span> <span class="title class_">ThreadPoolExecutor</span>(corePoolSize, maximumPoolSize, keepAliveTime, TimeUnit unit, workQueue, threadFactory, handler);</span><br></pre></td></tr></table></figure>
+
+<p>通过线程池性能稳定，也可以获取执行结果，并捕获异常。但是，<font color='red'>在业务复杂情况下，一个异步调用可能会依赖于另一个异步调用的执行结果。</font></p>
+<h4 id="线程的7大参数"><a href="#线程的7大参数" class="headerlink" title="线程的7大参数"></a>线程的7大参数</h4><blockquote>
+<p>@param corePoolSize：池中一直保持的线程的数量，即使线程空闲。除非设置了 allowCoreThreadTimeOut 。</p>
+<p>@param maximumPoolSize：池中允许的最大的线程数 。</p>
+<p>@param keepAliveTime：当线程数大于核心线程数的时候，线程在最大多长时间没有接到新任务就会终止释放， 最终线程池维持在 corePoolSize 大小 。</p>
+<p>@param unit：时间单位 。</p>
+<p>@param workQueue：阻塞队列，用来存储等待执行的任务，如果当前对线程的需求超过了 corePoolSize 大小，就会放在这里等待空闲线程执行。 </p>
+<p>@param threadFactory：创建线程的工厂，比如指定线程名等 。</p>
+<p>@param handler：拒绝策略，如果线程满了，线程池就会使用拒绝策略。</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221120221338331.png" alt="image-20221120221338331"></p>
+</blockquote>
+<p>运行流程：</p>
+<ol>
+<li>线程池创建，准备好core数量的核心线程，准备接受任务</li>
+<li>新的任务进来，用core准备好的空闲线程执行<ol>
+<li>core满了，就将再建立的任务放入阻塞队列中。空闲的core就会自己去阻塞队列中获取任务执行；</li>
+<li>阻塞队列满了，就直接开新线程执行，最大只能开到 max 指定的数量；</li>
+<li>max 都执行好了。Max-core 数量空闲的线程会在 keepAliveTime 指定的时间后自动销毁。最终保持到 core 大小；</li>
+<li>如果线程数开到了 max 的数量，还有新任务进来，就会使用 reject 指定的拒绝策略进行处理；</li>
+</ol>
+</li>
+<li>所有的线程创建都是由指定的factory创建的。</li>
+</ol>
+<h4 id="常见的4种线程池"><a href="#常见的4种线程池" class="headerlink" title="常见的4种线程池"></a>常见的4种线程池</h4><ul>
+<li>newCachedThreadPool<ul>
+<li>创建一个可缓存线程池，如果线程池长度超过处理需要，可灵活回收空闲线程，若无可回收，则新建线程。</li>
+</ul>
+</li>
+<li>newFixedThreadPool<ul>
+<li>创建一个定长线程池，可控制线程最大并发数，超出的线程会在队列中等待。</li>
+</ul>
+</li>
+<li>newScheduledThreadPool<ul>
+<li>创建一个定长线程池，支持定时及周期性任务执行。</li>
+</ul>
+</li>
+<li>newSingleThreadExecutor<ul>
+<li>创建一个单线程化的线程池，<font color='red'>它只会用唯一的工作线程来执行任务，保证所有任务按照指定顺序(FIFO, LIFO, 优先级)执行</font>。</li>
+</ul>
+</li>
+</ul>
+<h4 id="开发中为什么使用线程池"><a href="#开发中为什么使用线程池" class="headerlink" title="开发中为什么使用线程池"></a>开发中为什么使用线程池</h4><ul>
+<li>降低资源的消耗<ul>
+<li>通过重复利用已经创建好的线程降低线程的创建和销毁带来的损耗</li>
+</ul>
+</li>
+<li>提高响应速度<ul>
+<li>因为线程池中的线程数没有超过线程池的最大上限时，有的线程处于等待分配任务的状态，当任务来时无需创建新的线程就能执行。</li>
+</ul>
+</li>
+<li>提高线程的可管理性<ul>
+<li>线程池会根据当前系统特点对池内的线程进行优化处理，减少创建和销毁线程带来的系统开销。无限的创建和销毁线程不仅消耗系统资源，还降低系统的稳定性，使用线程池进行统一分配</li>
+</ul>
+</li>
+</ul>
+<h3 id="CompletableFuture-异步编排"><a href="#CompletableFuture-异步编排" class="headerlink" title="CompletableFuture 异步编排"></a>CompletableFuture 异步编排</h3><p>在 Java 8 中, 新增加了一个包含 50 个方法左右的类: CompletableFuture，提供了非常强大的 Future 的扩展功能，可以帮助我们简化异步编程的复杂性，提供了函数式编程的能力，可以 通过回调的方式处理计算结果，并且提供了转换和组合 CompletableFuture 的方法。 CompletableFuture 类实现了 Future 接口，所以你还是可以像以前一样通过<code>get</code>方法阻塞或者轮询的方式获得结果，但是这种方式不推荐使用。</p>
+<p>CompletableFuture 和 FutureTask 同属于 Future 接口的实现类，都可以获取线程的执行结果。</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221120223327396.png" alt="image-20221120223327396"></p>
+<ol>
+<li>创建异步对象</li>
+</ol>
+<p>CompletableFuture 提供了四个静态方法来创建一个异步操作。</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221120223501306.png" alt="image-20221120223501306"></p>
+<ul>
+<li>runXXX都是没有返回结果的，supplyXXX都是可以获取返回结果的；</li>
+<li>可以传入自定义的线程池，否则就用默认的线程池；</li>
+</ul>
+<ol start="2">
+<li>计算完成回调方法</li>
+</ol>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221120223738985.png" alt="image-20221120223738985"></p>
+<blockquote>
+<p>whenComplete可以处理正常和异常的计算结果，exceptionally处理异常情况。</p>
+<p><code>whenComplete</code>和<code>whenCompleteAsync</code>的区别：</p>
+<p>​	whenComplete：是执行当前任务的线程执行继续执行whenComplete的任务。</p>
+<p>​	whenCompleteAsync：是执行把 whenCompleteAsync 这个任务继续提交给线程池来进行执行。</p>
+</blockquote>
+<p><font color='red'>方法不以 Async 结尾，意味着 Action 使用相同的线程执行，而 Async 可能会使用其他线程 执行（如果是使用相同的线程池，也可能会被同一个线程选中执行）</font></p>
+<ol start="3">
+<li>handle 方法</li>
+</ol>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221120224653060.png" alt="image-20221120224653060"></p>
+<p>和 complete 一样，可对结果做最后的处理（可处理异常），可改变返回值。</p>
+<ol start="4">
+<li>线程串行化方法</li>
+</ol>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221120224800642.png" alt="image-20221120224800642"></p>
+<p>thenApply 方法：当一个线程依赖另一个线程时，获取上一个任务返回的结果，并返回当前任务的返回值。 </p>
+<p>thenAccept 方法：消费处理结果。接收任务的处理结果，并消费处理，无返回结果。 </p>
+<p>thenRun 方法：只要上面的任务执行完成，就开始执行 thenRun，只是处理完任务后，执行 thenRun 的后续操作。</p>
+<ol start="5">
+<li>两任务组合—都要完成</li>
+</ol>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221120225032497.png" alt="image-20221120225032497"></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221120225048364.png" alt="image-20221120225048364"></p>
+<p>两个任务必须都完成，触发该任务。 </p>
+<p>thenCombine：组合两个 future，获取两个 future 的返回结果，并返回当前任务的返回值 </p>
+<p>thenAcceptBoth：组合两个 future，获取两个 future 任务的返回结果，然后处理任务，没有返回值。</p>
+<p>runAfterBoth：组合两个 future，不需要获取 future 的结果，只需两个 future 处理完任务后， 处理该任务</p>
+<ol start="6">
+<li>两任务组合—一个完成</li>
+</ol>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221120225413226.png" alt="image-20221120225413226"></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221120225425033.png" alt="image-20221120225425033"></p>
+<p>当两个任务中，任意一个 future 任务完成的时候，执行任务。 </p>
+<p>applyToEither：两个任务有一个执行完成，获取它的返回值，处理任务并有新的返回值。 </p>
+<p>acceptEither：两个任务有一个执行完成，获取它的返回值，处理任务，没有新的返回值。 </p>
+<p>runAfterEither：两个任务有一个执行完成，不需要获取 future 的结果，处理任务，也没有返 回值</p>
+<ol start="7">
+<li>多任务组合</li>
+</ol>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221120225538795.png" alt="image-20221120225538795"></p>
+<p>allOf：等待所有任务完成</p>
+<p>anyOf：只要有一个任务完成</p>
+<h2 id="认证服务"><a href="#认证服务" class="headerlink" title="认证服务"></a>认证服务</h2><h3 id="社交登录"><a href="#社交登录" class="headerlink" title="社交登录"></a>社交登录</h3><p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221122112058805.png" alt="image-20221122112058805"></p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221122112126810.png" alt="image-20221122112126810"></p>
+<ol>
+<li>OAuth2.0</li>
+</ol>
+<ul>
+<li>OAuth2.0：对于用户相关的 OpenAPI（例如获取用户信息，动态同步，照片，日志，分 享等），为了保护用户数据的安全和隐私，第三方网站访问用户数据前都需要显式的向 用户征求授权。</li>
+<li>官方授权流程</li>
+</ul>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221122112658395.png" alt="image-20221122112658395"></p>
+<p>（A）用户打开客户端以后，客户端要求<font color='red'>用户</font>给予授权；</p>
+<p>（B）用户同意给予客户端授权；</p>
+<p>（C）客户端使用上一步获得的授权，向<font color='red'>认证服务器</font>申请令牌；</p>
+<p>（D）认证服务器对客户端进行认证以后，确认无误，同意发送令牌；</p>
+<p>（E）客户端使用令牌，向<font color='red'>资源服务器</font>申请获取资源；</p>
+<p>（F）资源服务器确认令牌无误，同意向客户端开放资源；</p>
+<ol start="2">
+<li><p>微博登录</p>
+<ol>
+<li>进入微博开放平台</li>
+<li>登陆微博，进入微连接，选择网站接入</li>
+</ol>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221122113615209.png" alt="image-20221122113615209"></p>
+<ol start="3">
+<li>选择立即接入</li>
+</ol>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221122113657697.png" alt="image-20221122113657697"></p>
+<ol start="4">
+<li>创建自己的应用</li>
+</ol>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221122113724239.png" alt="image-20221122113724239"></p>
+<ol start="5">
+<li><p>在开发阶段进行测试</p>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221122113805672.png" alt="image-20221122113805672"></p>
+</li>
+<li><p>进入高级信息，填写授权回调页的地址</p>
+</li>
+</ol>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221122113911328.png" alt="image-20221122113911328"></p>
+<ol start="7">
+<li>添加测试账号（选做）</li>
+</ol>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221122113946233.png" alt="image-20221122113946233"></p>
+<ol start="8">
+<li>进入文档，按照流程测试社交登陆</li>
+</ol>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221122114035290.png" alt="image-20221122114035290"></p>
+</li>
+</ol>
+<p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221122114044794.png" alt="image-20221122114044794"></p>
+<h3 id="Session共享问题"><a href="#Session共享问题" class="headerlink" title="Session共享问题"></a>Session共享问题</h3><h4 id="Session原理"><a href="#Session原理" class="headerlink" title="Session原理"></a>Session原理</h4><p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221123211927200.png" alt="image-20221123211927200"></p>
+<p>存在的问题：不能跨不同域名共享</p>
+<h4 id="分布式下Session共享问题"><a href="#分布式下Session共享问题" class="headerlink" title="分布式下Session共享问题"></a>分布式下Session共享问题</h4><p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221123212139235.png" alt="image-20221123212139235"></p>
+<h4 id="解决"><a href="#解决" class="headerlink" title="解决"></a>解决</h4><h5 id="方案一：Session复制"><a href="#方案一：Session复制" class="headerlink" title="方案一：Session复制"></a>方案一：Session复制</h5><p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221123212455118.png" alt="image-20221123212455118"></p>
+<ul>
+<li>优点<ul>
+<li>web-server（Tomcat）原生支持，只需要修改配置文件</li>
+</ul>
+</li>
+<li>缺点<ul>
+<li>session同步需要数据传输，占用大量网络带宽，降低了服务器群的业务处理能力</li>
+<li>任意一台web-server保存的数据都是所有web- server的session总和，受到内存限制无法水平扩展 更多的web-server</li>
+<li>大型分布式集群情况下，由于所有web-server都全 量保存数据，所以此方案不可取。</li>
+</ul>
+</li>
+</ul>
+<h5 id="方案二：客户端存储"><a href="#方案二：客户端存储" class="headerlink" title="方案二：客户端存储"></a>方案二：客户端存储</h5><p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221123212717063.png" alt="image-20221123212717063"></p>
+<ul>
+<li>优点<ul>
+<li>服务器不需存储session，用户保存自己的 session信息到cookie中。节省服务端资源</li>
+</ul>
+</li>
+<li>缺点<ul>
+<li>都是缺点，这只是一种思路。</li>
+<li>具体如下<ul>
+<li>每次http请求，携带用户在cookie中的完整信息， 浪费网络带宽</li>
+<li>每次http请求，携带用户在cookie中的完整信息， 浪费网络带宽</li>
+<li>session数据放在cookie中，存在泄漏、篡改、 窃取等安全隐患</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>这种方式不会使用。</li>
+</ul>
+<h5 id="方案三：hash一致性"><a href="#方案三：hash一致性" class="headerlink" title="方案三：hash一致性"></a>方案三：hash一致性</h5><p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221123212955179.png" alt="image-20221123212955179"></p>
+<ul>
+<li>优点：<ul>
+<li>只需要改nginx配置，不需要修改应用代码</li>
+<li>负载均衡，只要hash属性的值分布是均匀的，多台 web-server的负载是均衡的</li>
+<li>可以支持web-server水平扩展（session同步法是不行 的，受内存限制）</li>
+</ul>
+</li>
+<li>缺点<ul>
+<li>session还是存在web-server中的，所以web-server重 启可能导致部分session丢失，影响业务，如部分用户需要重新登录</li>
+<li>如果web-server水平扩展，rehash后session重新分布， 也会有一部分用户路由不到正确的session</li>
+</ul>
+</li>
+<li>但是以上缺点问题也不是很大，因为session本来都是有有 效期的。所以这两种反向代理的方式可以使用</li>
+</ul>
+<h5 id="方案四：统一存储"><a href="#方案四：统一存储" class="headerlink" title="方案四：统一存储"></a>方案四：统一存储</h5><p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221123213339832.png" alt="image-20221123213339832"></p>
+<ul>
+<li>优点：<ul>
+<li>没有安全隐患</li>
+<li>可以水平扩展，数据库&#x2F;缓存水平切分即可</li>
+<li>web-server重启或者扩容都不会有session丢失</li>
+</ul>
+</li>
+<li>缺点<ul>
+<li>增加了一次网络调用，并且需要修改应 用代码；如将所有的getSession方法替 换为从Redis查数据的方式。redis获取数据比内存慢很多</li>
+<li>上面缺点可以用SpringSession完美解决</li>
+</ul>
+</li>
+</ul>
+<h3 id="不同服务，子域Session共享问题"><a href="#不同服务，子域Session共享问题" class="headerlink" title="不同服务，子域Session共享问题"></a>不同服务，子域Session共享问题</h3><p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221123213652770.png" alt="image-20221123213652770"></p>
+<h3 id="SpringSession核心原理"><a href="#SpringSession核心原理" class="headerlink" title="SpringSession核心原理"></a>SpringSession核心原理</h3><p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221123213728930.png" alt="image-20221123213728930"></p>
+<h3 id="SSO（单点登录）"><a href="#SSO（单点登录）" class="headerlink" title="SSO（单点登录）"></a>SSO（单点登录）</h3><h2 id="接口幂等性"><a href="#接口幂等性" class="headerlink" title="接口幂等性"></a>接口幂等性</h2><h3 id="什么是接口幂等性"><a href="#什么是接口幂等性" class="headerlink" title="什么是接口幂等性"></a>什么是接口幂等性</h3><p>接口幂等性就是用户对于同一操作发起的一次请求或者多次请求的结果一致的；</p>
+<h3 id="哪情况需要防止"><a href="#哪情况需要防止" class="headerlink" title="哪情况需要防止"></a>哪情况需要防止</h3><ul>
+<li>用户多次点击按钮</li>
+<li>用户页面回退再次提交</li>
+<li>微服务互相调用，由于网络问题，导致请求失败。feign触发重试机制</li>
+<li>其他业务情况</li>
+</ul>
+<h3 id="幂等性解决方案"><a href="#幂等性解决方案" class="headerlink" title="幂等性解决方案"></a>幂等性解决方案</h3><ol>
+<li>token机制<ol>
+<li>服务端提供了发送token的接口。我们在分析业务的时候，哪些业务是存在幂等问题的，就必须在执行业务前，先去获取token，服务器会把token保存到redis中。</li>
+<li>然后调用业务接口请求时，把token携带过去，一般放在请求头部</li>
+<li>服务器判断token是否存在redis中，存在表示是第一次请求，然后删除token，继续执行业务；</li>
+<li>如果判断token不存在redis中，就表示是重复操作，直接返回重复标记给redis，这样就保证了业务代码，不被重复执行；</li>
+</ol>
+</li>
+</ol>
+<ul>
+<li><p>危险性</p>
+<ul>
+<li><p>先删除token还是后删除token：</p>
+<ul>
+<li>先删除可能导致，业务确实没有执行，重试还带上之前 token，由于防重设计导致， 请求还是不能执行；</li>
+<li>后删除可能导致，业务处理成功，但是服务闪断，出现超时，没有删除 token，别 人继续重试，导致业务被执行两遍；</li>
+<li>我们最好设计为先删除 token，如果业务调用失败，就重新获取 token 再次请求；</li>
+</ul>
+</li>
+<li><p>Token 获取、比较和删除必须是原子性</p>
+<ul>
+<li>redis.get(token) 、token.equals、redis.del(token)如果这两个操作不是原子，可能导 致，高并发下，都 get 到同样的数据，判断都成功，继续业务并发执行；</li>
+<li>可以在 redis 使用 lua 脚本完成这个操作</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> redis.call(<span class="string">&#x27;get&#x27;</span>, KEYS[<span class="number">1</span>]) == ARGV[<span class="number">1</span>] then <span class="keyword">return</span> redis.call(<span class="string">&#x27;del&#x27;</span>, KEYS[<span class="number">1</span>]) <span class="keyword">else</span> <span class="keyword">return</span> <span class="number">0</span> end</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+</ul>
+<ol start="2">
+<li><p>各种锁机制</p>
+<ol>
+<li><p>数据库悲观锁：</p>
+<p>select * from xxxx where id &#x3D; 1 for update; </p>
+<p>悲观锁使用时一般伴随事务一起使用，数据锁定时间可能会很长，需要根据实际情况选用。 另外要注意的是，id 字段一定是主键或者唯一索引，不然可能造成锁表的结果，处理起来会非常麻烦。</p>
+</li>
+<li><p>数据库乐观锁</p>
+<p>这种方法适合在更新的场景中， update t_goods set count &#x3D; count -1 , version &#x3D; version + 1 where good_id&#x3D;2 and version &#x3D; 1 ；</p>
+<p>根据 version 版本，也就是在操作库存前先获取当前商品的 version 版本号，然后操作的时候 带上此 version 号。我们梳理下，我们第一次操作库存时，得到 version 为 1，调用库存服务 version 变成了 2；但返回给订单服务出现了问题，订单服务又一次发起调用库存服务，当订 单服务传如的 version 还是 1，再执行上面的 sql 语句时，就不会执行；因为 version 已经变 为 2 了，where 条件就不成立。这样就保证了不管调用几次，只会真正的处理一次。 乐观锁主要使用于处理读多写少的问题。</p>
+</li>
+<li><p>业务层分布式锁</p>
+<p>如果多个机器可能在同一时间同时处理相同的数据，比如多台机器定时任务都拿到了相同数 据处理，我们就可以加分布式锁，锁定此数据，处理完成后释放锁。获取到锁的必须先判断 这个数据是否被处理过。</p>
+</li>
+</ol>
+</li>
+<li><p>各种唯一约束</p>
+<ol>
+<li><p>数据库唯一约束</p>
+<p>插入数据，应该按照唯一索引进行插入，比如订单号，相同的订单就不可能有两条记录插入。 我们在数据库层面防止重复。</p>
+<p>这个机制是利用了数据库的主键唯一约束的特性，解决了在 insert 场景时幂等问题。但主键 的要求不是自增的主键，这样就需要业务生成全局唯一的主键。</p>
+<p>如果是分库分表场景下，路由规则要保证相同请求下，落地在同一个数据库和同一表中，要 不然数据库主键约束就不起效果了，因为是不同的数据库和表主键不相关。</p>
+</li>
+<li><p>redis set防重</p>
+<p>很多数据需要处理，只能被处理一次，比如我们可以计算数据的 MD5 将其放入 redis 的 set， 每次处理数据，先看这个 MD5 是否已经存在，存在就不处理。</p>
+</li>
+<li><p>防重表</p>
+<p>使用订单号 orderNo 作为去重表的唯一索引，把唯一索引插入去重表，再进行业务操作，且 他们在同一个事务中。这个保证了重复请求时，因为去重表有唯一约束，导致请求失败，避 免了幂等问题。这里要注意的是，去重表和业务表应该在同一库中，这样就保证了在同一个 事务，即使业务操作失败了，也会把去重表的数据回滚。这个很好的保证了数据一致性。</p>
+</li>
+<li><p>全局请求唯一id</p>
+<p>调用接口时，生成一个唯一 id，redis 将数据保存到集合中（去重），存在即处理过。 可以使用 nginx 设置每一个请求的唯一 id；</p>
+<p> proxy_set_header X-Request-Id $request_id</p>
+</li>
+</ol>
+</li>
+</ol>
+<h2 id="Feign远程调用问题"><a href="#Feign远程调用问题" class="headerlink" title="Feign远程调用问题"></a>Feign远程调用问题</h2><h3 id="Feign远程调用丢失请求头问题"><a href="#Feign远程调用丢失请求头问题" class="headerlink" title="Feign远程调用丢失请求头问题"></a>Feign远程调用丢失请求头问题</h3><p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221202141503030.png" alt="image-20221202141503030"></p>
+<h3 id="Feign异步情况丢失上下文问题"><a href="#Feign异步情况丢失上下文问题" class="headerlink" title="Feign异步情况丢失上下文问题"></a>Feign异步情况丢失上下文问题</h3><p><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/../../images/image-20221202141630831.png" alt="image-20221202141630831"></p>
+<h2 id="分布式事务"><a href="#分布式事务" class="headerlink" title="分布式事务"></a>分布式事务</h2><h3 id="本地事务关键点"><a href="#本地事务关键点" class="headerlink" title="本地事务关键点"></a>本地事务关键点</h3><h4 id="事务的传播行为"><a href="#事务的传播行为" class="headerlink" title="事务的传播行为"></a>事务的传播行为</h4><ol>
+<li><font color='red'>PROPAGATION_REQUIRED：如果当前没有事务，就创建一个新事务，如果当前存在事务， 就加入该事务，该设置是最常用的设置。</font></li>
+<li>PROPAGATION_SUPPORTS：支持当前事务，如果当前存在事务，就加入该事务，如果当 前不存在事务，就以非事务执行。</li>
+<li>PROPAGATION_MANDATORY：支持当前事务，如果当前存在事务，就加入该事务，如果 当前不存在事务，就抛出异常</li>
+<li><font color='red'>PROPAGATION_REQUIRES_NEW：创建新事务，无论当前存不存在事务，都创建新事务。</font></li>
+<li>PROPAGATION_NOT_SUPPORTED：以非事务方式执行操作，如果当前存在事务，就把当 前事务挂起。</li>
+<li>PROPAGATION_NEVER：以非事务方式执行，如果当前存在事务，则抛出异常。</li>
+<li>PROPAGATION_NESTED：如果当前存在事务，则在嵌套事务内执行。如果当前没有事务， 则执行与 PROPAGATION_REQUIRED 类似的操作。</li>
+</ol>
+<h4 id="SpringBoot事务关键点"><a href="#SpringBoot事务关键点" class="headerlink" title="SpringBoot事务关键点"></a>SpringBoot事务关键点</h4><ol>
+<li><p>事务的自动配置</p>
+<p>TransactionAutoConfiguration</p>
+</li>
+<li><p><font color='red'>事务的坑</font></p>
+<p><font color='red'>在同一个类里面，编写两个方法，内部调用的时候，会导致事务设置失效。原因是没有用到<code>代理对象</code>的缘故。</font></p>
+<p>解决：</p>
+<ol>
+<li>导入 spring-boot-starter-aop</li>
+<li>@EnableTransactionManagement(proxyTargetClass &#x3D; true)</li>
+<li>@EnableAspectJAutoProxy(exposeProxy&#x3D;true)</li>
+<li>AopContext.currentProxy() 调用方法</li>
+</ol>
+</li>
+</ol>
+<h3 id="分布式事务-1"><a href="#分布式事务-1" class="headerlink" title="分布式事务"></a>分布式事务</h3></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="http://amao455.github.io">毛奇文</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="http://amao455.github.io/2022/11/02/%E8%B0%B7%E7%B2%92%E5%95%86%E5%9F%8E/%E8%B0%B7%E7%B2%92%E5%95%86%E5%9F%8E/">http://amao455.github.io/2022/11/02/谷粒商城/谷粒商城/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="http://amao455.github.io" target="_blank">文的个人博客</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"></div><div class="post_share"><div class="social-share" data-image="/img/2.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="next-post pull-full"><a href="/2022/11/04/MyBatisPlus/"><img class="next-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/7.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">MyBatisPlus</div></div></a></div></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/4.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">毛奇文</div><div class="author-info__description">记录编程生活点滴</div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">16</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">0</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">0</div></a></div><a id="card-info-btn" href="https://amao455.github.io"><i class="fab fa-github"></i><span>前往小家...</span></a><div class="card-info-social-icons is-center"><a class="social-icon" href="https://github.com/amao455/amao455.github.io" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="mailto:1315406616@qq.com" target="_blank" title="Email"><i class="fas fa-envelope"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">欢迎来到我的博客!</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%A7%E8%83%BD%E4%B8%8E%E5%8E%8B%E5%8A%9B%E6%B5%8B%E8%AF%95"><span class="toc-number">1.</span> <span class="toc-text">性能与压力测试</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BC%93%E5%AD%98"><span class="toc-number">2.</span> <span class="toc-text">缓存</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BC%93%E5%AD%98%E5%A4%B1%E6%95%88%E9%97%AE%E9%A2%98"><span class="toc-number">2.1.</span> <span class="toc-text">缓存失效问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BC%93%E5%AD%98%E6%95%B0%E6%8D%AE%E4%B8%80%E8%87%B4%E6%80%A7"><span class="toc-number">2.2.</span> <span class="toc-text">缓存数据一致性</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9C%AC%E5%9C%B0%E9%94%81"><span class="toc-number">2.2.1.</span> <span class="toc-text">本地锁</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0"><span class="toc-number">2.2.2.</span> <span class="toc-text">分布式锁实现</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Redisson%E5%AE%8C%E6%88%90%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81"><span class="toc-number">2.2.3.</span> <span class="toc-text">Redisson完成分布式锁</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Spring-Cache"><span class="toc-number">2.3.</span> <span class="toc-text">Spring Cache</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%82%E6%AD%A5%E5%92%8C%E7%BA%BF%E7%A8%8B"><span class="toc-number">3.</span> <span class="toc-text">异步和线程</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BA%BF%E7%A8%8B"><span class="toc-number">3.1.</span> <span class="toc-text">线程</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96%E7%BA%BF%E7%A8%8B%E7%9A%844%E7%A7%8D%E6%96%B9%E5%BC%8F"><span class="toc-number">3.1.1.</span> <span class="toc-text">初始化线程的4种方式</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BA%BF%E7%A8%8B%E7%9A%847%E5%A4%A7%E5%8F%82%E6%95%B0"><span class="toc-number">3.1.2.</span> <span class="toc-text">线程的7大参数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E7%9A%844%E7%A7%8D%E7%BA%BF%E7%A8%8B%E6%B1%A0"><span class="toc-number">3.1.3.</span> <span class="toc-text">常见的4种线程池</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%BC%80%E5%8F%91%E4%B8%AD%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BD%BF%E7%94%A8%E7%BA%BF%E7%A8%8B%E6%B1%A0"><span class="toc-number">3.1.4.</span> <span class="toc-text">开发中为什么使用线程池</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CompletableFuture-%E5%BC%82%E6%AD%A5%E7%BC%96%E6%8E%92"><span class="toc-number">3.2.</span> <span class="toc-text">CompletableFuture 异步编排</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%A4%E8%AF%81%E6%9C%8D%E5%8A%A1"><span class="toc-number">4.</span> <span class="toc-text">认证服务</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A4%BE%E4%BA%A4%E7%99%BB%E5%BD%95"><span class="toc-number">4.1.</span> <span class="toc-text">社交登录</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Session%E5%85%B1%E4%BA%AB%E9%97%AE%E9%A2%98"><span class="toc-number">4.2.</span> <span class="toc-text">Session共享问题</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Session%E5%8E%9F%E7%90%86"><span class="toc-number">4.2.1.</span> <span class="toc-text">Session原理</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%86%E5%B8%83%E5%BC%8F%E4%B8%8BSession%E5%85%B1%E4%BA%AB%E9%97%AE%E9%A2%98"><span class="toc-number">4.2.2.</span> <span class="toc-text">分布式下Session共享问题</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%A7%A3%E5%86%B3"><span class="toc-number">4.2.3.</span> <span class="toc-text">解决</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%96%B9%E6%A1%88%E4%B8%80%EF%BC%9ASession%E5%A4%8D%E5%88%B6"><span class="toc-number">4.2.3.1.</span> <span class="toc-text">方案一：Session复制</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%96%B9%E6%A1%88%E4%BA%8C%EF%BC%9A%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%AD%98%E5%82%A8"><span class="toc-number">4.2.3.2.</span> <span class="toc-text">方案二：客户端存储</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%96%B9%E6%A1%88%E4%B8%89%EF%BC%9Ahash%E4%B8%80%E8%87%B4%E6%80%A7"><span class="toc-number">4.2.3.3.</span> <span class="toc-text">方案三：hash一致性</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E6%96%B9%E6%A1%88%E5%9B%9B%EF%BC%9A%E7%BB%9F%E4%B8%80%E5%AD%98%E5%82%A8"><span class="toc-number">4.2.3.4.</span> <span class="toc-text">方案四：统一存储</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8D%E5%90%8C%E6%9C%8D%E5%8A%A1%EF%BC%8C%E5%AD%90%E5%9F%9FSession%E5%85%B1%E4%BA%AB%E9%97%AE%E9%A2%98"><span class="toc-number">4.3.</span> <span class="toc-text">不同服务，子域Session共享问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SpringSession%E6%A0%B8%E5%BF%83%E5%8E%9F%E7%90%86"><span class="toc-number">4.4.</span> <span class="toc-text">SpringSession核心原理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SSO%EF%BC%88%E5%8D%95%E7%82%B9%E7%99%BB%E5%BD%95%EF%BC%89"><span class="toc-number">4.5.</span> <span class="toc-text">SSO（单点登录）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8E%A5%E5%8F%A3%E5%B9%82%E7%AD%89%E6%80%A7"><span class="toc-number">5.</span> <span class="toc-text">接口幂等性</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E6%8E%A5%E5%8F%A3%E5%B9%82%E7%AD%89%E6%80%A7"><span class="toc-number">5.1.</span> <span class="toc-text">什么是接口幂等性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%93%AA%E6%83%85%E5%86%B5%E9%9C%80%E8%A6%81%E9%98%B2%E6%AD%A2"><span class="toc-number">5.2.</span> <span class="toc-text">哪情况需要防止</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B9%82%E7%AD%89%E6%80%A7%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="toc-number">5.3.</span> <span class="toc-text">幂等性解决方案</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Feign%E8%BF%9C%E7%A8%8B%E8%B0%83%E7%94%A8%E9%97%AE%E9%A2%98"><span class="toc-number">6.</span> <span class="toc-text">Feign远程调用问题</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Feign%E8%BF%9C%E7%A8%8B%E8%B0%83%E7%94%A8%E4%B8%A2%E5%A4%B1%E8%AF%B7%E6%B1%82%E5%A4%B4%E9%97%AE%E9%A2%98"><span class="toc-number">6.1.</span> <span class="toc-text">Feign远程调用丢失请求头问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Feign%E5%BC%82%E6%AD%A5%E6%83%85%E5%86%B5%E4%B8%A2%E5%A4%B1%E4%B8%8A%E4%B8%8B%E6%96%87%E9%97%AE%E9%A2%98"><span class="toc-number">6.2.</span> <span class="toc-text">Feign异步情况丢失上下文问题</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1"><span class="toc-number">7.</span> <span class="toc-text">分布式事务</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%AC%E5%9C%B0%E4%BA%8B%E5%8A%A1%E5%85%B3%E9%94%AE%E7%82%B9"><span class="toc-number">7.1.</span> <span class="toc-text">本地事务关键点</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BA%8B%E5%8A%A1%E7%9A%84%E4%BC%A0%E6%92%AD%E8%A1%8C%E4%B8%BA"><span class="toc-number">7.1.1.</span> <span class="toc-text">事务的传播行为</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#SpringBoot%E4%BA%8B%E5%8A%A1%E5%85%B3%E9%94%AE%E7%82%B9"><span class="toc-number">7.1.2.</span> <span class="toc-text">SpringBoot事务关键点</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1-1"><span class="toc-number">7.2.</span> <span class="toc-text">分布式事务</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2022/11/21/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/jvm/" title="无题"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/13.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="无题"/></a><div class="content"><a class="title" href="/2022/11/21/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/jvm/" title="无题">无题</a><time datetime="2022-11-21T12:04:50.763Z" title="发表于 2022-11-21 20:04:50">2022-11-21</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/11/21/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/%E8%AE%A1%E7%BD%91/" title="计算机网络的相关知识"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/15.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="计算机网络的相关知识"/></a><div class="content"><a class="title" href="/2022/11/21/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/%E8%AE%A1%E7%BD%91/" title="计算机网络的相关知识">计算机网络的相关知识</a><time datetime="2022-11-20T16:00:00.000Z" title="发表于 2022-11-21 00:00:00">2022-11-21</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/11/20/maven/POM%E6%96%87%E4%BB%B6%E5%B8%AE%E5%8A%A9%E6%96%87%E6%A1%A3/" title="POM文件配置说明"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/11.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="POM文件配置说明"/></a><div class="content"><a class="title" href="/2022/11/20/maven/POM%E6%96%87%E4%BB%B6%E5%B8%AE%E5%8A%A9%E6%96%87%E6%A1%A3/" title="POM文件配置说明">POM文件配置说明</a><time datetime="2022-11-19T16:00:00.000Z" title="发表于 2022-11-20 00:00:00">2022-11-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/11/20/maven/Maven/" title="Maven相关知识"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/9.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Maven相关知识"/></a><div class="content"><a class="title" href="/2022/11/20/maven/Maven/" title="Maven相关知识">Maven相关知识</a><time datetime="2022-11-19T16:00:00.000Z" title="发表于 2022-11-20 00:00:00">2022-11-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2022/11/13/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/%E6%95%B0%E6%8D%AE%E5%BA%93/" title="数据库相关知识一（Mysql）"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="/img/18.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="数据库相关知识一（Mysql）"/></a><div class="content"><a class="title" href="/2022/11/13/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/%E6%95%B0%E6%8D%AE%E5%BA%93/" title="数据库相关知识一（Mysql）">数据库相关知识一（Mysql）</a><time datetime="2022-11-12T16:00:00.000Z" title="发表于 2022-11-13 00:00:00">2022-11-13</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url('/img/2.jpg')"><div id="footer-wrap"><div class="copyright">&copy;2022 By 毛奇文</div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="is-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据库加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div id="local-search-results"></div></div></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><script>function panguFn () {
+  if (typeof pangu === 'object') pangu.autoSpacingPage()
+  else {
+    getScript('https://cdn.jsdelivr.net/npm/pangu/dist/browser/pangu.min.js')
+      .then(() => {
+        pangu.autoSpacingPage()
+      })
+  }
+}
+
+function panguInit () {
+  if (false){
+    GLOBAL_CONFIG_SITE.isPost && panguFn()
+  } else {
+    panguFn()
+  }
+}
+
+document.addEventListener('DOMContentLoaded', panguInit)</script><script src="/js/search/local-search.js"></script><div class="js-pjax"></div><script defer src="/live2d-widget/autoload.js"></script><script defer src="/js/light.js"></script><canvas id="universe"></canvas><script defer src="/js/universe.js"></script><script defer src="/js/cursor.js"></script><canvas class="fireworks" mobile="false"></canvas><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/fireworks.min.js"></script><script id="canvas_nest" defer="defer" color="0,0,255" opacity="0.7" zIndex="-1" count="99" mobile="false" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/canvas-nest.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = true;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><!-- hexo injector body_end start --><script data-pjax>
+    function butterfly_categories_card_injector_config(){
+      var parent_div_git = document.getElementById('recent-posts');
+      var item_html = '<style>li.categoryBar-list-item{width:32.3%;}.categoryBar-list{max-height: 190px;overflow:auto;}.categoryBar-list::-webkit-scrollbar{width:0!important}@media screen and (max-width: 650px){.categoryBar-list{max-height: 160px;}}</style><div class="recent-post-item" style="height:auto;width:100%;padding:0px;"><div id="categoryBar"><ul class="categoryBar-list"></ul></div></div>';
+      console.log('已挂载butterfly_categories_card')
+      parent_div_git.insertAdjacentHTML("afterbegin",item_html)
+      }
+    if( document.getElementById('recent-posts') && (location.pathname ==='/'|| '/' ==='all')){
+    butterfly_categories_card_injector_config()
+    }
+  </script><script data-pjax>
+  function butterfly_clock_anzhiyu_injector_config(){
+    var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+    var item_html = '<div class="card-widget card-clock"><div class="card-glass"><div class="card-background"><div class="card-content"><div id="hexo_electric_clock"><img class="entered loading" id="card-clock-loading" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://cdn.cbd.int/hexo-butterfly-clock-anzhiyu/lib/loading.gif" style="height: 120px; width: 100%;" data-ll-status="loading"/></div></div></div></div></div>';
+    console.log('已挂载butterfly_clock_anzhiyu')
+    if(parent_div_git) {
+      parent_div_git.insertAdjacentHTML("afterbegin",item_html)
+    }
+  }
+  var elist = 'null'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var qweather_key = 'e40d5d0577434c268e067106d5f822ee';
+  var gaud_map_key = '159e7587acceaae251b4c993700df9eb';
+  var baidu_ak_key = 'undefined';
+  var flag = 0;
+  var clock_rectangle = '112.982279,28.19409';
+  var clock_default_rectangle_enable = 'false';
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_clock_anzhiyu_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_clock_anzhiyu_injector_config();
+  }
+  </script><script src="https://widget.qweather.net/simple/static/js/he-simple-common.js?v=2.0"></script><script data-pjax src="https://cdn.cbd.int/hexo-butterfly-clock-anzhiyu/lib/clock.min.js"></script><script data-pjax>
+  function butterfly_swiper_injector_config(){
+    var parent_div_git = document.getElementById('recent-posts');
+    var item_html = '<div class="recent-post-item" style="height: auto;width: 100%"><div class="blog-slider swiper-container-fade swiper-container-horizontal" id="swiper_container"><div class="blog-slider__wrp swiper-wrapper" style="transition-duration: 0ms;"></div><div class="blog-slider__pagination swiper-pagination-clickable swiper-pagination-bullets"></div></div></div>';
+    console.log('已挂载butterfly_swiper')
+    parent_div_git.insertAdjacentHTML("afterbegin",item_html)
+    }
+  var elist = 'undefined'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_swiper_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_swiper_injector_config();
+  }
+  </script><script defer src="https://npm.elemecdn.com/hexo-butterfly-swiper/lib/swiper.min.js"></script><script defer data-pjax src="https://npm.elemecdn.com/hexo-butterfly-swiper/lib/swiper_init.js"></script><script data-pjax>
+  function butterfly_footer_beautify_injector_config(){
+    var parent_div_git = document.getElementById('footer-wrap');
+    var item_html = '<div id="workboard"></div><p id="ghbdages"><a class="github-badge" target="_blank" href="https://hexo.io/" style="margin-inline:5px" data-title="博客框架为Hexo_v6.2.0" title=""><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&amp;logo=hexo" alt=""/></a><a class="github-badge" target="_blank" href="https://butterfly.js.org/" style="margin-inline:5px" data-title="主题版本Butterfly_v4.3.1" title=""><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&amp;logo=bitdefender" alt=""/></a><a class="github-badge" target="_blank" href="https://vercel.com/" style="margin-inline:5px" data-title="本站采用多线部署，主线路托管于Vercel" title=""><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://img.shields.io/badge/Hosted-Vercel-brightgreen?style=flat&amp;logo=Vercel" alt=""/></a><a class="github-badge" target="_blank" href="https://dashboard.4everland.org/" style="margin-inline:5px" data-title="本站采用多线部署，备用线路托管于4EVERLAND" title=""><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://img.shields.io/badge/Hosted-4EVERLAND-22DDDD?style=flat&amp;logo=IPFS" alt=""/></a><a class="github-badge" target="_blank" href="https://github.com/" style="margin-inline:5px" data-title="本站项目由Github托管" title=""><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://img.shields.io/badge/Source-Github-d021d6?style=flat&amp;logo=GitHub" alt=""/></a><a class="github-badge" target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/4.0/" style="margin-inline:5px" data-title="本站采用知识共享署名-非商业性使用-相同方式共享4.0国际许可协议进行许可" title=""><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-lazy-src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&amp;logo=Claris" alt=""/></a></p>';
+    console.log('已挂载butterfly_footer_beautify')
+    parent_div_git.insertAdjacentHTML("beforeend",item_html)
+    }
+  var elist = 'null'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_footer_beautify_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_footer_beautify_injector_config();
+  }
+  </script><script async src="https://www.fomal.cc/static/js/runtime.js"></script><div class="js-pjax"><script async="async">var arr = document.getElementsByClassName('recent-post-item');
+for(var i = 0;i<arr.length;i++){
+    arr[i].classList.add('wow');
+    arr[i].classList.add('animate__bounceInLeft');
+    arr[i].setAttribute('data-wow-duration', '2s');
+    arr[i].setAttribute('data-wow-delay', '1s');
+    arr[i].setAttribute('data-wow-offset', '100');
+    arr[i].setAttribute('data-wow-iteration', '2');
+  }</script><script async="async">var arr = document.getElementsByClassName('card-widget');
+for(var i = 0;i<arr.length;i++){
+    arr[i].classList.add('wow');
+    arr[i].classList.add('animate__lightSpeedInRight');
+    arr[i].setAttribute('data-wow-duration', '');
+    arr[i].setAttribute('data-wow-delay', '');
+    arr[i].setAttribute('data-wow-offset', '');
+    arr[i].setAttribute('data-wow-iteration', '');
+  }</script><script async="async">var arr = document.getElementsByClassName('page-number');
+for(var i = 0;i<arr.length;i++){
+    arr[i].classList.add('wow');
+    arr[i].classList.add('animate__rotateInDownLeft');
+    arr[i].setAttribute('data-wow-duration', '');
+    arr[i].setAttribute('data-wow-delay', '');
+    arr[i].setAttribute('data-wow-offset', '');
+    arr[i].setAttribute('data-wow-iteration', '');
+  }</script></div><script defer src="https://npm.elemecdn.com/hexo-butterfly-wowjs/lib/wow.min.js"></script><script defer src="https://npm.elemecdn.com/hexo-butterfly-wowjs/lib/wow_init.js"></script><!-- hexo injector body_end end --></body></html>
