@@ -108,6 +108,19 @@
     
     
     <entry>
+      <title></title>
+      <link href="/2022/11/21/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/jvm/jvm/"/>
+      <url>/2022/11/21/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/jvm/jvm/</url>
+      
+        <content type="html"><![CDATA[<h2 id="虚拟机与Java虚拟机"><a href="#虚拟机与Java虚拟机" class="headerlink" title="虚拟机与Java虚拟机"></a>虚拟机与Java虚拟机</h2><h3 id="虚拟机"><a href="#虚拟机" class="headerlink" title="虚拟机"></a>虚拟机</h3><ul><li>所谓虚拟机，就是一台虚拟的计算机。它是一款软件，用来执行一系列虚拟计算机指令。大体上，虚拟机可以分为系统虚拟机和程序虚拟机。<ul><li>系统虚拟机：visual Box， VMware，它们完全是对物理计算机的仿真，提供了一个可运行完整操作系统的软件平台；</li><li>程序虚拟机：Java虚拟机，它专门为执行单个计算机程序而设计，在Java虚拟机中执行的指令我们称为java字节码指令。</li></ul></li></ul><h3 id="Java虚拟机"><a href="#Java虚拟机" class="headerlink" title="Java虚拟机"></a>Java虚拟机</h3><ul><li>Java虚拟机是一台执行java字节码的虚拟计算机，它拥有独立的运行机制，其运行的java字节码也未必由Java语言编译而成；</li><li>JVM平台的各种语言可以共享Java虚拟机带来的跨平台性、优秀的垃圾回收器，以及可靠的及时编译器；</li><li>Java技术的核心就是Java虚拟机，因为所有的Java程序都运行在Java虚拟机内部。</li></ul>]]></content>
+      
+      
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>计算机网络相关知识</title>
       <link href="/2022/11/21/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/%E8%AE%A1%E7%BD%91/"/>
       <url>/2022/11/21/%E8%AE%A1%E7%AE%97%E6%9C%BA%E5%9F%BA%E7%A1%80/%E8%AE%A1%E7%BD%91/</url>
